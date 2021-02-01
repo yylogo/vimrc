@@ -2,51 +2,47 @@
 call plug#begin('~/.vim/plugged')
 
 " 主题
-Plug 'ryanoasis/vim-devicons'
+Plug 'ryanoasis/vim-devicons' 
 Plug 'lifepillar/vim-solarized8'
 Plug 'altercation/vim-colors-solarized'
 
 " defx文件树
 if has('nvim')
-    Plug 'Shougo/defx.nvim', { 'do': ':UpdateRemotePlugins' }
+    Plug 'Shougo/defx.nvim', { 'do': ':UpdateRemotePlugins' } 
 else
-    Plug 'Shougo/defx.nvim'
+    Plug 'Shougo/defx.nvim' 
     Plug 'roxma/nvim-yarp'
-    Plug 'roxma/vim-hug-neovim-rpc'
+    Plug 'roxma/vim-hug-neovim-rpc' 
 endif
-Plug 'kristijanhusak/defx-icons'
+Plug 'kristijanhusak/defx-icons' 
 
 " 模糊检索
-Plug 'majutsushi/tagbar'
-Plug 'Yggdroot/LeaderF', { 'do': './install.sh' }
+Plug 'majutsushi/tagbar' 
+Plug 'Yggdroot/LeaderF', { 'do': './install.sh' } 
 
 " 全局搜索(IDE的Ctrl + Shift + F)
-Plug 'dyng/ctrlsf.vim'
+Plug 'dyng/ctrlsf.vim' 
 
 " 底栏和顶栏
 Plug 'vim-airline/vim-airline'
-Plug 'vim-airline/vim-airline-themes'
+Plug 'vim-airline/vim-airline-themes' 
 
 " 头文件和C文件快速切换
-Plug 'derekwyatt/vim-fswitch'
-
+Plug 'derekwyatt/vim-fswitch' 
 
 " 媲美sublime的多选插件
-Plug 'terryma/vim-multiple-cursors'
-
+Plug 'mg979/vim-visual-multi', {'branch': 'master'}
 
 " 语法补全
-" Plug 'Valloric/YouCompleteMe'
-" Plug 'Shougo/deoplete-clangx'
-" Plug 'zchee/deoplete-jedi'
 Plug 'davidhalter/jedi-vim'
-Plug 'ervandew/supertab'
+Plug 'ervandew/supertab' 
 
 " 书签插件，会计按键m, [, ] 为主
-Plug 'kshenoy/vim-signature'
+Plug 'kshenoy/vim-signature' 
 
 " 键盘映射, 还要看看怎么用
-" Plug 'liuchengxu/vim-which-key', { 'on': ['WhichKey', 'WhichKey!'] }
+Plug 'liuchengxu/vim-which-key', { 'on': ['WhichKey', 'WhichKey!'] }
+
 Plug 'tpope/vim-fugitive'
 Plug 'octol/vim-cpp-enhanced-highlight'
 Plug 'Yggdroot/indentLine'
@@ -138,7 +134,7 @@ colorscheme solarized
 " ========================== 快捷键统一放置 ==========================
 
 " 文件树和tags树
-map <F2> :Defx <CR>
+map <F2> :Defx -search=`expand('%:p')` -toggle <CR>
 nmap <F3> :TagbarToggle <CR>
 
 " 上下快速翻页（避免Ctrl按键
@@ -160,31 +156,17 @@ nmap <C-_>i :cs find i ^<C-R>=expand("<cfile>")<CR>$<CR>
 nmap <C-_>d :cs find d <C-R>=expand("<cword>")<CR><CR>
 
 " 使用 ctrlsf.vfiletypeim 插件在工程内全局查找光标所在关键字，设置快捷键。快捷键速记法：search in project
-function SearchInSF()
-    let l:my_file_type = &filetype
-    if l:my_file_type == 'c'
-        let l:my_file_type = 'cc'
-    endif
-
-    " exec ':CtrlSF -T '.l:my_file_type.' '.expand("<cword>").' <CR>'
-endfunction
-" nnoremap <Leader>sf :call SearchInSF()<CR>
-nnoremap <Leader>sf :CtrlSF <CR>
 nnoremap <Leader>R :!python ~/MobaServer/server/pubtool/quick_reload.py 
 
 
-" 进入搜索面板
-nmap     <C-N>f <Plug>CtrlSFPrompt
-" 进入搜索面板，并预先输入选择的内容
-vmap     <C-F>F <Plug>CtrlSFVwordPath
-" 进入搜索面板，直接搜索选择的内容
-vmap     <C-F>f <Plug>CtrlSFVwordExec
-" 进入搜索面板，并预先输入光标下的内容
-nmap     <C-F>N <Plug>CtrlSFCwordPath
-" 进入搜索面板，并搜索光标下的内容
-nmap     <C-F>n <Plug>CtrlSFCwordExec
+nnoremap <Leader>pf :CtrlSF <CR>
 " 打开上次的搜索结果
-nnoremap <C-F>o :CtrlSFToggle<CR>
+nnoremap <leader>p :CtrlSFToggle<CR>
+" 进入搜索面板，并预先输入选择的内容
+vmap     <leader>pF <Plug>CtrlSFVwordPath
+" 进入搜索面板，直接搜索选择的内容
+vmap     <leader>pf <Plug>CtrlSFVwordExec
+
 
 " 使用Leaderf查找定义Search defination
 " nnoremap <Leader>sd :Leaderf gtags --all<CR>
@@ -206,6 +188,7 @@ nmap <silent> <Leader>sw :FSHere<cr>
 nmap <tab> :bn<cr>
 " 设置Shift - tab键映射"
 nmap <S-tab> :bp<cr>
+nmap <leader>s :term<cr>
 
 
 " 代码浏览快捷键（pycharm的快捷键）
@@ -218,22 +201,11 @@ nmap <Leader>h :po<cr>
 nmap <Leader>l :ta<cr>
 " 代码浏览快捷键
 nmap <Leader>] g]
-"
+
 " Leaderf 默认有<Leader>f 全局搜索文件， <Leader>b 搜索一打开的buffer
 
 " 在命令行输入:e %%就可以代表当前编辑文件的目录
 " cnoremap <expr> %% getcmdtype()==':'?expand('%:h').'/':'%%'
-
-let g:multi_cursor_use_default_mapping=0
-" Default mapping
-let g:multi_cursor_start_word_key      = '<C-j>'
-let g:multi_cursor_select_all_word_key = '<C-a>'
-" let g:multi_cursor_start_key           = '<Leader>mgs'
-" let g:multi_cursor_select_all_key      = '<Leader>mga'
-let g:multi_cursor_next_key            = '<C-j>'
-let g:multi_cursor_prev_key            = '<C-k>'
-let g:multi_cursor_skip_key            = '<C-x>'
-let g:multi_cursor_quit_key            = '<Esc>'
 
 
 " ========================== 插件统一配置 ==========================
@@ -274,7 +246,13 @@ function! s:defx_my_settings() abort
     nnoremap <silent><buffer><expr> c defx#do_action('copy')
     nnoremap <silent><buffer><expr> m defx#do_action('move')
     nnoremap <silent><buffer><expr> p defx#do_action('paste')
+
+    nnoremap <silent><buffer><expr> P defx#do_action('preview')
+
 endfunction
+
+" defx搜索当前文件
+map <leader>dd :Defx -no-focus -search=`expand('%:p')` <CR>
 
 " 设置图标
 call defx#custom#column('icon', {
@@ -300,14 +278,44 @@ call defx#custom#option('_', {
       \ 'direction': 'botright',
       \ 'show_ignored_files': 0,
       \ 'buffer_name': 'defxplorer',
-      \ 'toggle': 1,
-      \ 'columns': 'icon:indent:icons:filename',
-      \ 'resume': 1,
       \ 'root_marker': '≡ ',
       \ 'ignored_files':
       \     '.mypy_cache,.pytest_cache,.git,.hg,.svn,.stversions'
-      \   . ',__pycache__,.sass-cache,*.egg-info,.DS_Store,*.pyc,*.swp'
+      \   . ',__pycache__,.sass-cache,*.egg-info,.DS_Store,*.pyc,*.swp,*.log,*.un~'
       \ })
+      " 'resume': 1,
+
+let g:defx_icons_enable_syntax_highlight = 1
+
+" --------- Vim-Mark --------
+" 原插件的映射占用按键太多了，统一增加了一个前缀
+let g:mwIgnoreCase = 0
+let g:mwKeyMapPrefix = 'm'
+" let g:mw_no_mappings = 1
+
+"nmap <unique> <Leader>mm <Plug>MarkSet
+"xmap <unique> <Leader>mm <Plug>MarkSet
+"nmap <unique> <Leader>mr <Plug>MarkRegex
+"xmap <unique> <Leader>mr <Plug>MarkRegex
+"nmap <unique> <Leader>mn <Plug>MarkClear
+"nmap <unique> <Leader>mM <Plug>MarkToggle
+"nmap <unique> <Leader>mN <Plug>MarkAllClear
+"" No default mapping for <Plug>MarkConfirmAllClear.
+
+"nmap <unique> <Leader>m* <Plug>MarkSearchCurrentNext
+"nmap <unique> <Leader>m# <Plug>MarkSearchCurrentPrev
+"nmap <unique> <Leader>m/ <Plug>MarkSearchAnyNext
+"nmap <unique> <Leader>m? <Plug>MarkSearchAnyPrev
+"nmap <unique> m* <Plug>MarkSearchNext
+"nmap <unique> m# <Plug>MarkSearchPrev
+"" No default mapping for <Plug>MarkSearchOrCurNext
+"" No default mapping for <Plug>MarkSearchOrCurPrev
+"" No default mapping for <Plug>MarkSearchOrAnyNext
+"" No default mapping for <Plug>MarkSearchOrAnyPrev
+"" No default mapping for <Plug>MarkSearchGroupNext
+"" No default mapping for <Plug>MarkSearchGroupPrev
+"" No default mapping for <Plug>MarkSearchUsedGroupNext
+"" No default mapping for <Plug>MarkSearchUsedGroupPrev
 
 
 " --------- CtrlSF --------
@@ -315,7 +323,13 @@ let g:ctrlsf_context = '-B 5 -A 3'
 let g:ctrlsf_selected_line_hl = 'op'
 let g:ctrlsf_auto_preview = 1
 let g:ctrlsf_default_view_mode = 'compact'
+let g:ctrlsf_populate_qflist = 1
+" let g:ctrlsf_default_view_mode = 'normal'
 let g:ctrlsf_ackprg = 'ag'
+let g:ctrlsf_default_root = 'project'
+let g:ctrlsf_auto_focus = {
+    \ 'at': 'start'
+    \ }
 let g:ctrlsf_extra_backend_args = {
     \ 'pt': '--home-ptignore'
     \ }
@@ -385,7 +399,7 @@ let g:Lf_Gtagslabel = 'native-pygments'
 let g:Lf_UseVersionControlTool = 0
 let g:Lf_WildIgnore = {
         \ 'dir': ['.svn','.git', '.hg'],
-        \ 'file': ['*.vcxproj','*.vcproj','*.lib','*.bak','*.exe','*.o','*.so','*.py[co]', '*.obj']
+        \ 'file': ['*.vcxproj','*.vcproj','*.lib','*.bak','*.exe','*.o','*.so','*.py[co]', '*.obj', '*.log', '*.md', 'tags']
         \}
 " autocmd BufNewFile,BufRead X:/yourdir* let g:Lf_WildIgnore={'file':['*.pyc',],'dir':['tags']}
 
@@ -393,11 +407,19 @@ let g:Lf_WindowPosition = 'popup'
 let g:Lf_AutoResize = 1
 let g:Lf_PopupWidth = 0.7520
 let g:Lf_PopupShowStatusline = 0
-let g:Lf_PopupPosition = [8, 35]
+let g:Lf_PopupPosition = [7, 35]
 
 let g:Lf_PreviewInPopup = 1
 let g:Lf_PopupPreviewPosition = 'bottom'
 let g:Lf_PopupColorscheme = 'gruvbox_default'
+
+" \ "--type-add web:*.{html,css,js}*",
+let g:Lf_RgConfig = [
+    \ "--max-columns=150",
+    \ "--glob=!tags",
+    \ "-T=log",
+    \ "-T=md",
+\ ]
 
 
 " -------- tagbar --------
@@ -441,3 +463,4 @@ let g:tagbar_compact=1
 " -------- 自动补全 --------
 let g:SuperTabDefaultCompletionType = "context"
 let g:jedi#popup_on_dot = 0
+
