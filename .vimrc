@@ -17,8 +17,10 @@ endif
 Plug 'kristijanhusak/defx-icons' 
 
 " 模糊检索
-Plug 'majutsushi/tagbar' 
 Plug 'Yggdroot/LeaderF', { 'do': './install.sh' } 
+
+" 标签浏览
+Plug 'liuchengxu/vista.vim'
 
 " 全局搜索(IDE的Ctrl + Shift + F)
 Plug 'dyng/ctrlsf.vim' 
@@ -37,8 +39,12 @@ Plug 'mg979/vim-visual-multi', {'branch': 'master'}
 Plug 'davidhalter/jedi-vim'
 Plug 'ervandew/supertab' 
 
+" 语法检查
+Plug 'vim-syntastic/syntastic'
+
 " 书签插件，会计按键m, [, ] 为主
 Plug 'kshenoy/vim-signature' 
+Plug 'yylogo/vim-mark'
 
 " 键盘映射, 还要看看怎么用
 Plug 'liuchengxu/vim-which-key', { 'on': ['WhichKey', 'WhichKey!'] }
@@ -46,18 +52,19 @@ Plug 'liuchengxu/vim-which-key', { 'on': ['WhichKey', 'WhichKey!'] }
 Plug 'tpope/vim-fugitive'
 Plug 'octol/vim-cpp-enhanced-highlight'
 Plug 'Yggdroot/indentLine'
-Plug 'jiangmiao/auto-pairs'
+" Plug 'jiangmiao/auto-pairs'
 Plug 'tell-k/vim-autopep8'
 Plug 'Raimondi/delimitMate'
 
 " svn插件
 Plug 'mhinz/vim-signify'
 Plug 'vim-scripts/vcscommand.vim'
-
 Plug 'inkarkat/vim-ingo-library'
-Plug 'inkarkat/vim-mark'
 
 Plug 'scrooloose/nerdcommenter'
+
+" 项目管理
+Plug 'mhinz/vim-startify'
 
 call plug#end()
 
@@ -120,6 +127,15 @@ set nowrap
 " 设置双字宽度，否则无法完整显示特殊符号
 set ambiwidth=double
 
+if has('nvim')
+	map <S-Insert> <C-R>+
+	map! <S-Insert> <C-R>+
+	map <Home> ^  
+	imap <Home> <Esc>^i  
+	map <End> $
+	imap <End> <Esc>$i
+endif
+
 " 记住上次打开的文件的位置
 au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
 
@@ -127,15 +143,16 @@ au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g
 "solarized主题设置在终端下的设置"
 let g:solarized_termcolors=256
 "设置背景色"
-set background=dark
+set background=light
 colorscheme solarized
 
+set noshowmode
 
 " ========================== 快捷键统一放置 ==========================
 
 " 文件树和tags树
-map <F2> :Defx -search=`expand('%:p')` -toggle <CR>
-nmap <F3> :TagbarToggle <CR>
+map <silent> <F2> :Defx -search=`expand('%:p')` -no-focus -toggle <CR>
+nmap <silent> <F3> :Vista!! <CR>
 
 " 上下快速翻页（避免Ctrl按键
 nmap <leader>j <C-d>
@@ -161,7 +178,8 @@ nnoremap <Leader>R :!python ~/MobaServer/server/pubtool/quick_reload.py
 
 nnoremap <Leader>pf :CtrlSF <CR>
 " 打开上次的搜索结果
-nnoremap <leader>p :CtrlSFToggle<CR>
+nnoremap <leader>pp :CtrlSFToggle<CR>
+nnoremap <leader>p :CtrlSF 
 " 进入搜索面板，并预先输入选择的内容
 vmap     <leader>pF <Plug>CtrlSFVwordPath
 " 进入搜索面板，直接搜索选择的内容
@@ -206,6 +224,25 @@ nmap <Leader>] g]
 
 " 在命令行输入:e %%就可以代表当前编辑文件的目录
 " cnoremap <expr> %% getcmdtype()==':'?expand('%:h').'/':'%%'
+
+" 在最后一个非隐藏缓冲区退出后则退出vim
+function! s:check_exit() abort
+    let l:close_mark = 1
+    for i in range(1, winnr('$'))
+        let l:buf_idx = winbufnr(i)
+        if l:buf_idx == -1
+            continue
+        endif
+        if buflisted(l:buf_idx)
+            let l:close_mark = 0
+            break
+        endif
+    endfor
+    if l:close_mark == 1
+        windo quit
+    endif
+endfunction
+autocmd BufEnter * call s:check_exit()
 
 
 " ========================== 插件统一配置 ==========================
@@ -252,7 +289,7 @@ function! s:defx_my_settings() abort
 endfunction
 
 " defx搜索当前文件
-map <leader>dd :Defx -no-focus -search=`expand('%:p')` <CR>
+map <silent> <leader>dd :Defx -no-focus -search=`expand('%:p')` <CR>
 
 " 设置图标
 call defx#custom#column('icon', {
@@ -291,32 +328,6 @@ let g:defx_icons_enable_syntax_highlight = 1
 " 原插件的映射占用按键太多了，统一增加了一个前缀
 let g:mwIgnoreCase = 0
 let g:mwKeyMapPrefix = 'm'
-" let g:mw_no_mappings = 1
-
-"nmap <unique> <Leader>mm <Plug>MarkSet
-"xmap <unique> <Leader>mm <Plug>MarkSet
-"nmap <unique> <Leader>mr <Plug>MarkRegex
-"xmap <unique> <Leader>mr <Plug>MarkRegex
-"nmap <unique> <Leader>mn <Plug>MarkClear
-"nmap <unique> <Leader>mM <Plug>MarkToggle
-"nmap <unique> <Leader>mN <Plug>MarkAllClear
-"" No default mapping for <Plug>MarkConfirmAllClear.
-
-"nmap <unique> <Leader>m* <Plug>MarkSearchCurrentNext
-"nmap <unique> <Leader>m# <Plug>MarkSearchCurrentPrev
-"nmap <unique> <Leader>m/ <Plug>MarkSearchAnyNext
-"nmap <unique> <Leader>m? <Plug>MarkSearchAnyPrev
-"nmap <unique> m* <Plug>MarkSearchNext
-"nmap <unique> m# <Plug>MarkSearchPrev
-"" No default mapping for <Plug>MarkSearchOrCurNext
-"" No default mapping for <Plug>MarkSearchOrCurPrev
-"" No default mapping for <Plug>MarkSearchOrAnyNext
-"" No default mapping for <Plug>MarkSearchOrAnyPrev
-"" No default mapping for <Plug>MarkSearchGroupNext
-"" No default mapping for <Plug>MarkSearchGroupPrev
-"" No default mapping for <Plug>MarkSearchUsedGroupNext
-"" No default mapping for <Plug>MarkSearchUsedGroupPrev
-
 
 " --------- CtrlSF --------
 let g:ctrlsf_context = '-B 5 -A 3'
@@ -359,7 +370,11 @@ set t_Co=256
 " 永远显示状态栏
 set laststatus=2
 " 支持 powerline 字体
-let g:airline_powerline_fonts = 1
+if has('nvim')
+    let g:airline_powerline_fonts = 0
+else
+    let g:airline_powerline_fonts = 1
+endif
 " tabline中当前buffer两端的分隔字符
 let g:airline#extensions#tabline#enabled = 1
 " tabline中未激活buffer两端的分隔字符
@@ -368,8 +383,13 @@ let g:airline#extensions#tabline#left_sep = ' '
 let g:airline#extensions#tabline#left_alt_sep = '|'
 let g:airline#extensions#tabline#buffer_nr_show = 1
 " let g:airline_theme='solarized dark'
-let g:airline_theme="base16"
-let g:airline_solarized_bg='light'
+if has('nvim')
+    let g:airline_theme="base16"
+    let g:airline_solarized_bg='light'
+else
+    let g:airline_theme="solarized"
+    let g:airline_solarized_bg='dark'
+endif
 " 关闭状态显示空白符号计数
 let g:airline#extensions#whitespace#enabled = 0
 let g:airline#extensions#whitespace#symbol = '!'
@@ -423,44 +443,103 @@ let g:Lf_RgConfig = [
 
 
 " -------- tagbar --------
-" 设置 ctags 对哪些代码元素生成标签
-let g:tagbar_type_cpp = {
-    \ 'kinds' : [
-        \ 'd:macros:1',
-        \ 'g:enums',
-        \ 't:typedefs:0:0',
-        \ 'e:enumerators:0:0',
-        \ 'n:namespaces',
-        \ 'c:classes',
-        \ 's:structs',
-        \ 'u:unions',
-        \ 'f:functions',
-        \ 'm:members:0:0',
-        \ 'v:global:0:0',
-        \ 'x:external:0:0',
-        \ 'l:local:0:0'
-     \ ],
-     \ 'sro'        : '::',
-     \ 'kind2scope' : {
-         \ 'g' : 'enum',
-         \ 'n' : 'namespace',
-         \ 'c' : 'class',
-         \ 's' : 'struct',
-         \ 'u' : 'union'
-     \ },
-     \ 'scope2kind' : {
-         \ 'enum'      : 'g',
-         \ 'namespace' : 'n',
-         \ 'class'     : 'c',
-         \ 'struct'    : 's',
-         \ 'union'     : 'u'
-     \ }
-\ }
-let g:tagbar_left=1
-let g:tagbar_width = 32
-let g:tagbar_compact=1
+" 启用悬浮窗预览
+let g:vista_echo_cursor_strategy ='floating_win'
+" 侧边栏宽度.
+let g:vista_sidebar_width = 30
+" 设置为0，以禁用光标移动时的回显.
+let g:vista_echo_cursor = 1
+" 当前游标上显示详细符号信息的时间延迟.
+let g:vista_cursor_delay = 400
+" 跳转到一个符号时，自动关闭vista窗口.
+let g:vista_close_on_jump = 0
+"打开vista窗口后移动到它.
+let g:vista_stay_on_open = 0
+" 跳转到标记后闪烁光标2次，间隔100ms.
+let g:vista_blink = [2, 100]
+" 展示样式
+let g:vista_icon_indent = ["╰─▸ ", "├─▸ "]
+let g:vista_default_executive = 'ctags'
+let g:vista_ctags_cmd = {
+      \ 'haskell': 'hasktags -x -o - -c',
+      \ }
+let g:vista#renderer#enable_icon = 1
+let g:vista_sidebar_position = 'vertical topleft'
+
+function! NearestMethodOrFunction() abort
+  return get(b:, 'vista_nearest_method_or_function', '')
+endfunction
+
+set statusline+=%{NearestMethodOrFunction()}
+
+autocmd VimEnter * call vista#RunForNearestMethodOrFunction()
+
 
 " -------- 自动补全 --------
 let g:SuperTabDefaultCompletionType = "context"
 let g:jedi#popup_on_dot = 0
+
+" -------- 语法检查 --------
+"set statusline+=%#warningmsg#
+"set statusline+=%{SyntasticStatuslineFlag()}
+"set statusline+=%*
+
+"let g:syntastic_always_populate_loc_list = 1
+"let g:syntastic_auto_loc_list = 1
+"let g:syntastic_check_on_open = 1
+"let g:syntastic_check_on_wq = 0
+
+" -------- 打开启动 --------
+let g:startify_lists = [
+        \ { 'type': 'sessions',  'header': ['   Sessions']       },
+        \ { 'type': 'files',     'header': ['   MRU']            },
+        \ { 'type': 'bookmarks', 'header': ['   Bookmarks']      },
+        \ ]
+
+let g:startify_custom_header = [
+	\ "              syyysssoooyddmmmmmmmNmNNNNNNNNmNNNNNmmmmmNNNNNNNNNNNNNmNNNNNNNMMMNNNmhssssssssss",
+	\ '              osssssosyhdmmmmmmmmmmmNNNNNNNNNNmmmmmmmmNNNNNNNNNmNNNNNNNNNNNNMMMNNMNmyssssssssy',
+	\ '              ossssssydmmmmmmdhhhhdNNmmNNmmmmddhhdmmmmmmmmmmNNNNNNNNNNNNNNNNMMMNNNNNdsssooosyy',
+	\ '              ossssoohmmmmmdho+ooshddhhhyhhysssossddddmddmmmNNNNmmmmmNNNNNNMMMMNNNNNdysooooosy',
+	\ '              oossoosmNNmmys/::://oooo+++o+//////oyyshdyhdmmmmNNhhhdmNNNNNNNMMMMNNNNmhssoooosy',
+	\ '              +++ooshmNmys+/------:::::::::---::::///+++oyyhhddhsssyhdmmNNNNMMMMMNNNNhsssssyyy',
+	\ '              ///+oshmms:::---.....----------------::///++ooooo++++osyhdmNNNNMMMMMNNNdssyyyhhy',
+	\ '              //++oydmh::----..................-----::::///////////++oyhdmNNNNMMMMNNmdyyyyyyyy',
+	\ '              ++oosydmo:----.......................----::::::///////+osyddmmNNNNNMNNmdhhysssyy',
+	\ '              ooossyhd/:/+++++/:-..............--://++++++//////////++oshddmmNNNNNNmmhhyyyyyyh',
+	\ '              sssssshh/+sssssssys+:-.......--/+osyyyyhhyyssoo+//////+++osyhdmmNNNNmmmhyyyyyyhh',
+	\ '              ssssssyy///::----:///:---.---:///////////+++ooooo///////++oshdmmmmmmmmdyyssyyyyy',
+	\ '              yyssssys-::-......--::--..---:/:---.....--:///+++/////////+oydmmmmmmmdhyyssyyyyy',
+	\ '              ssssyyy+---://-+so+:----....://:-----////::://///////:::///oydmmmmmddhhyyyyyhhyy',
+	\ '              ossyyss/-.-//:./hdh/---..`.-//::-/o/-ymmhosoo++//:::::::::/oydmmddhhysssyyyyyyyy',
+	\ '              ossssoo/.......--:--..-...-://:--::---///://///::-::::::://+ydddhys+/////syyyyyy',
+	\ '              oosooo+:......---.......`.-::::----::::::::---------::::://+shhyo+++/+++//yyyyyy',
+	\ '              ooooo++:..````.........`.-::::::-...--------...----::::////+osooo+o///o+/:yyyyyy',
+	\ "              sooo+++/..````````....``.-:////:-..............---::////////+++oo+++//o+/+yhhyyy",
+	\ '              soooooo/-...``````...``..--::://-...````.....----::///////////+oo+++//+/oyyyyyyy',
+	\ '              ooooooso-.-..```..---..-://:::/+/--.......----::::////++/////++o+++//+/oyyyyyyyy',
+	\ '              oooossss--........-//:/+oooooooo/::-..-------:://////++++////oo+/////-:+osyhhyyy',
+	\ '              osssssss:-......--.-::/++++++++//::--------:::////////+++/////::://::---.--/syyy',
+	\ '              ssssssss/-.....--------::::///////::----:::::://////////++///::::::/::-..````-+s',
+	\ '              sssssssso--....-/++/++///+++++++ooo+/:-:::::/://///////+++/--/:-..-:-.```````  `',
+	\ '              sssssssss/--...-:://////++++oosssso+/--:::::///////+//////-.::.  ``.-------...``',
+	\ '              ssssssssso/--..--..---:///////////:::--:::://////+++++++/:-:/.`  ````-::---.....',
+	\ '              sssssssssso/:--......-----------::---::///////++++++++++//:/-.`````   `..---....',
+	\ '              ssssssssssso+/:-............------::::////+++++++++++++++/+:.``````       ``....',
+	\ '              ssssssssssso/--::---..--.-----::::://++++++ooooooooooo+++o:.```````          `.:',
+	\ '              ssssssssso/-:.`.-.-:::::::::///++++ooooooooooooooooooo++o:.````````             ',
+	\ '              sssssssso-`:o...: ``/ooooosssssssssssooooooooooooo+++oo+-.`````````             ',
+	\ '              ssssoooo- `-/``/- `./h+/++ooooosooooooo+++++++++++++oo/.``````````              ',
+	\ '              ooooooo/  `````/``:/+hh+///////////++++++++++++++++o+-.`````````````            ',
+	\ '              ooooooo-     `.:``:+ohds////:::://////////////+++++-.`````````  ````      ``````',
+	\ '              oo+++++.     `.:-.-oshdd+/////:///////////////+++/.```````````  ``     ````     ',
+	\ '              :::::::      `.:/-./shmm+/://////////////::///++-``````````````  ```````        ',
+	\ '              `.-+sys`    ...-/---symhy/::////////////::::///-`````````````.```--`           `',
+	\ '              -shdddd+    `-./+//+ssdsmo//:/:::::::::::::://.```````.````.:..-//.``     ``.:oy',
+    \ "+---------------------------------------------------------------------------------------------------+",
+    \ "|                                      zhangqingyang@corp.netease.com                               |",
+    \ "+-------------------------------------------------+-------------------------------------------------+",
+	            \]
+
+let g:startify_custom_footer = [ ]
 
