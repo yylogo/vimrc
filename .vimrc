@@ -5,7 +5,6 @@ call plug#begin('~/.vim/plugged')
 Plug 'ryanoasis/vim-devicons' 
 Plug 'lifepillar/vim-solarized8'
 Plug 'altercation/vim-colors-solarized'
-
 " defx文件树
 if has('nvim')
     Plug 'Shougo/defx.nvim', { 'do': ':UpdateRemotePlugins' } 
@@ -15,56 +14,47 @@ else
     Plug 'roxma/vim-hug-neovim-rpc' 
 endif
 Plug 'kristijanhusak/defx-icons' 
-
 " 模糊检索
 Plug 'Yggdroot/LeaderF', { 'do': './install.sh' } 
-
 " 标签浏览
 Plug 'liuchengxu/vista.vim'
-
 " 全局搜索(IDE的Ctrl + Shift + F)
 Plug 'dyng/ctrlsf.vim' 
-
 " 底栏和顶栏
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes' 
-
 " 头文件和C文件快速切换
 Plug 'derekwyatt/vim-fswitch' 
-
 " 媲美sublime的多选插件
 Plug 'mg979/vim-visual-multi', {'branch': 'master'}
-
 " 语法补全
 Plug 'davidhalter/jedi-vim'
-Plug 'ervandew/supertab' 
-
 " 语法检查
-Plug 'vim-syntastic/syntastic'
-
+Plug 'dense-analysis/ale'
 " 书签插件，会计按键m, [, ] 为主
 Plug 'kshenoy/vim-signature' 
 Plug 'yylogo/vim-mark'
-
-" 键盘映射, 还要看看怎么用
+" 键盘映射,  TODO: 还要看看怎么用
 Plug 'liuchengxu/vim-which-key', { 'on': ['WhichKey', 'WhichKey!'] }
-
-Plug 'tpope/vim-fugitive'
-Plug 'octol/vim-cpp-enhanced-highlight'
-Plug 'Yggdroot/indentLine'
-" Plug 'jiangmiao/auto-pairs'
+" Python自动格式化插件
 Plug 'tell-k/vim-autopep8'
-Plug 'Raimondi/delimitMate'
-
-" svn插件
-Plug 'mhinz/vim-signify'
-Plug 'vim-scripts/vcscommand.vim'
-Plug 'inkarkat/vim-ingo-library'
-
+" vim内部集成git
+Plug 'tpope/vim-fugitive'
+" C++显示增强
+Plug 'octol/vim-cpp-enhanced-highlight'
+" tab对齐显示工具
+Plug 'Yggdroot/indentLine'
+" 标签标记工具
+Plug 'yylogo/vim-signify'
+" 自动注释插件
 Plug 'scrooloose/nerdcommenter'
-
-" 项目管理
+" 启动管理
 Plug 'mhinz/vim-startify'
+
+" VCS工具 TODO：了解怎么快速浏览diff并且提交
+Plug 'vim-scripts/vcscommand.vim'
+" 一个基础库
+Plug 'inkarkat/vim-ingo-library'
 
 call plug#end()
 
@@ -112,7 +102,6 @@ set fileformat=unix "设置以unix的格式保存文件"
 set cindent     "设置C样式的缩进格式"
 set mouse=a     "启用鼠标"
 
-
 " 自定义光标样式
 highlight CursorLine cterm=NONE ctermbg=black ctermfg=brown guibg=NONE guifg=NONE
 highlight CursorColumn cterm=NONE ctermbg=black ctermfg=brown guibg=NONE guifg=NONE
@@ -126,15 +115,11 @@ set ruler
 set nowrap
 " 设置双字宽度，否则无法完整显示特殊符号
 set ambiwidth=double
+" 显示颜色
+set t_Co=256
+" 永远显示状态栏
+set laststatus=2
 
-if has('nvim')
-	map <S-Insert> <C-R>+
-	map! <S-Insert> <C-R>+
-	map <Home> ^  
-	imap <Home> <Esc>^i  
-	map <End> $
-	imap <End> <Esc>$i
-endif
 
 " 记住上次打开的文件的位置
 au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
@@ -143,25 +128,47 @@ au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g
 "solarized主题设置在终端下的设置"
 let g:solarized_termcolors=256
 "设置背景色"
-set background=light
-colorscheme solarized
+set background=dark
+colorscheme solarized8
 
-set noshowmode
+" 在最后一个非隐藏缓冲区退出后则退出vim
+function! s:check_exit() abort
+    let l:close_mark = 1
+    for i in range(1, winnr('$'))
+        let l:buf_idx = winbufnr(i)
+        if l:buf_idx == -1
+            continue
+        endif
+        if buflisted(l:buf_idx)
+            let l:close_mark = 0
+            break
+        endif
+    endfor
+    if l:close_mark == 1
+        windo quit
+    endif
+endfunction
+autocmd BufEnter * call s:check_exit()
 
 " ========================== 快捷键统一放置 ==========================
 
+" nvim兼容设置
+if has('nvim')
+	map <S-Insert> <C-R>+
+	map! <S-Insert> <C-R>+
+	map <Home> ^  
+	imap <Home> <Esc>^i  
+	map <End> $
+	imap <End> <Esc>$i
+endif
 " 文件树和tags树
 map <silent> <F2> :Defx -search=`expand('%:p')` -no-focus -toggle <CR>
 nmap <silent> <F3> :Vista!! <CR>
-
 " 上下快速翻页（避免Ctrl按键
 nmap <leader>j <C-d>
 nmap <leader>k <C-u>
+" 在命令模式的补全功能
 cnoremap <leader>n <C-L><C-D>
-
-" 使用g + ]而不是Ctrl + ]，这样每次都可以直接列出所有匹配项
-" 注释/取消注释
-
 " cscope的配置
 nmap <C-_>s :cs find s <C-R>=expand("<cword>")<CR><CR>
 nmap <C-_>g :cs find g <C-R>=expand("<cword>")<CR><CR>
@@ -175,7 +182,6 @@ nmap <C-_>d :cs find d <C-R>=expand("<cword>")<CR><CR>
 " 使用 ctrlsf.vfiletypeim 插件在工程内全局查找光标所在关键字，设置快捷键。快捷键速记法：search in project
 nnoremap <Leader>R :!python ~/MobaServer/server/pubtool/quick_reload.py 
 
-
 nnoremap <Leader>pf :CtrlSF <CR>
 " 打开上次的搜索结果
 nnoremap <leader>pp :CtrlSFToggle<CR>
@@ -184,7 +190,6 @@ nnoremap <leader>p :CtrlSF
 vmap     <leader>pF <Plug>CtrlSFVwordPath
 " 进入搜索面板，直接搜索选择的内容
 vmap     <leader>pf <Plug>CtrlSFVwordExec
-
 
 " 使用Leaderf查找定义Search defination
 " nnoremap <Leader>sd :Leaderf gtags --all<CR>
@@ -208,7 +213,6 @@ nmap <tab> :bn<cr>
 nmap <S-tab> :bp<cr>
 nmap <leader>s :term<cr>
 
-
 " 代码浏览快捷键（pycharm的快捷键）
 nmap <C-h> :po<cr>
 " 代码浏览快捷键（pycharm的快捷键）
@@ -218,32 +222,12 @@ nmap <Leader>h :po<cr>
 " 代码浏览快捷键
 nmap <Leader>l :ta<cr>
 " 代码浏览快捷键
+" 使用g + ]而不是Ctrl + ]，这样每次都可以直接列出所有匹配项
 nmap <Leader>] g]
 
 " Leaderf 默认有<Leader>f 全局搜索文件， <Leader>b 搜索一打开的buffer
-
 " 在命令行输入:e %%就可以代表当前编辑文件的目录
 " cnoremap <expr> %% getcmdtype()==':'?expand('%:h').'/':'%%'
-
-" 在最后一个非隐藏缓冲区退出后则退出vim
-function! s:check_exit() abort
-    let l:close_mark = 1
-    for i in range(1, winnr('$'))
-        let l:buf_idx = winbufnr(i)
-        if l:buf_idx == -1
-            continue
-        endif
-        if buflisted(l:buf_idx)
-            let l:close_mark = 0
-            break
-        endif
-    endfor
-    if l:close_mark == 1
-        windo quit
-    endif
-endfunction
-autocmd BufEnter * call s:check_exit()
-
 
 " ========================== 插件统一配置 ==========================
 " -------- Defx --------
@@ -267,7 +251,6 @@ function! s:defx_my_settings() abort
     nnoremap <silent><buffer><expr> <C-l> defx#do_action('redraw')
     nnoremap <silent><buffer><expr> <C-g> defx#do_action('print')
     nnoremap <silent><buffer><expr> cd defx#do_action('change_vim_cwd')
-
     nnoremap <silent><buffer><expr> K defx#do_action('new_directory')
     nnoremap <silent><buffer><expr> N defx#do_action('new_file')
     " nnoremap <silent><buffer><expr> M defx#do_action('new_multiple_files')
@@ -283,32 +266,24 @@ function! s:defx_my_settings() abort
     nnoremap <silent><buffer><expr> c defx#do_action('copy')
     nnoremap <silent><buffer><expr> m defx#do_action('move')
     nnoremap <silent><buffer><expr> p defx#do_action('paste')
-
     nnoremap <silent><buffer><expr> P defx#do_action('preview')
-
 endfunction
-
 " defx搜索当前文件
 map <silent> <leader>dd :Defx -no-focus -search=`expand('%:p')` <CR>
-
 " 设置图标
 call defx#custom#column('icon', {
       \ 'directory_icon': '▸',
       \ 'opened_icon': '▾',
       \ 'root_icon': ' ',
       \ })
-
 call defx#custom#column('filename', {
       \ 'min_width': 40,
       \ 'max_width': 40,
       \ })
-
 call defx#custom#column('mark', {
       \ 'readonly_icon': '✗',
       \ 'selected_icon': '✓',
       \ })
-
-
 call defx#custom#option('_', {
       \ 'winwidth': 35,
       \ 'split': 'vertical',
@@ -321,7 +296,6 @@ call defx#custom#option('_', {
       \   . ',__pycache__,.sass-cache,*.egg-info,.DS_Store,*.pyc,*.swp,*.log,*.un~'
       \ })
       " 'resume': 1,
-
 let g:defx_icons_enable_syntax_highlight = 1
 
 " --------- Vim-Mark --------
@@ -344,7 +318,7 @@ let g:ctrlsf_auto_focus = {
 let g:ctrlsf_extra_backend_args = {
     \ 'pt': '--home-ptignore'
     \ }
-
+let g:ctrlsf_ignore_dir = ['res']
 
 " ------- Cscope --------
 if has("cscope")
@@ -365,10 +339,6 @@ if has("cscope")
 endif
 
 " -------- vim-airline --------
-" 显示颜色
-set t_Co=256
-" 永远显示状态栏
-set laststatus=2
 " 支持 powerline 字体
 if has('nvim')
     let g:airline_powerline_fonts = 0
@@ -405,44 +375,40 @@ let g:airline_section_z                        = ''
 " let g:airline_section_warning                  = ''
 " let g:airline_section_error                  = ''
 
-
 " -------- Leaderf --------
 let g:Lf_ShowRelativePath = 0
 let g:Lf_DefaultMode = 'NameOnly'
 let g:Lf_StlColorscheme = 'popup'
 let g:Lf_HideHelp = 1
-let g:Lf_UseCache = 0
+let g:Lf_UseCache = 1
 let g:Lf_PreviewResult = {'Function':0, 'Colorscheme':1}
 let g:Lf_IgnoreCurrentBufferName = 1
-" let g:Lf_GtagsAutoGenerate = 1
+let g:Lf_GtagsAutoGenerate = 1
 let g:Lf_Gtagslabel = 'native-pygments'
 let g:Lf_UseVersionControlTool = 0
 let g:Lf_WildIgnore = {
-        \ 'dir': ['.svn','.git', '.hg'],
-        \ 'file': ['*.vcxproj','*.vcproj','*.lib','*.bak','*.exe','*.o','*.so','*.py[co]', '*.obj', '*.log', '*.md', 'tags']
+        \ 'dir': ['.svn','.git', '.hg', 'res', ],
+        \ 'file': ['*.vcxproj','*.vcproj','*.lib','*.bak','*.exe','*.o','*.so','*.py[co]', '*.obj', '*.log', '*.md', 'tags', '*.png', '*.html']
         \}
 " autocmd BufNewFile,BufRead X:/yourdir* let g:Lf_WildIgnore={'file':['*.pyc',],'dir':['tags']}
-
 let g:Lf_WindowPosition = 'popup'
 let g:Lf_AutoResize = 1
 let g:Lf_PopupWidth = 0.7520
 let g:Lf_PopupShowStatusline = 0
 let g:Lf_PopupPosition = [7, 35]
-
 let g:Lf_PreviewInPopup = 1
 let g:Lf_PopupPreviewPosition = 'bottom'
 let g:Lf_PopupColorscheme = 'gruvbox_default'
-
 " \ "--type-add web:*.{html,css,js}*",
 let g:Lf_RgConfig = [
     \ "--max-columns=150",
     \ "--glob=!tags",
-    \ "-T=log",
-    \ "-T=md",
+    \ '-g "*.{py,c,h}"',
 \ ]
+let g:Lf_MaxCount = 0
+let g:Lf_RememberLastSearch = 1
 
-
-" -------- tagbar --------
+" -------- vista 标签浏览器 --------
 " 启用悬浮窗预览
 let g:vista_echo_cursor_strategy ='floating_win'
 " 侧边栏宽度.
@@ -465,37 +431,30 @@ let g:vista_ctags_cmd = {
       \ }
 let g:vista#renderer#enable_icon = 1
 let g:vista_sidebar_position = 'vertical topleft'
-
 function! NearestMethodOrFunction() abort
   return get(b:, 'vista_nearest_method_or_function', '')
 endfunction
-
 set statusline+=%{NearestMethodOrFunction()}
-
 autocmd VimEnter * call vista#RunForNearestMethodOrFunction()
 
-
-" -------- 自动补全 --------
-let g:SuperTabDefaultCompletionType = "context"
-let g:jedi#popup_on_dot = 0
+" -------- jedi-vim 自动补全 --------
+let g:jedi#completions_enabled = 0
+let g:jedi#smart_auto_mappings = 1
 
 " -------- 语法检查 --------
-"set statusline+=%#warningmsg#
-"set statusline+=%{SyntasticStatuslineFlag()}
-"set statusline+=%*
-
-"let g:syntastic_always_populate_loc_list = 1
-"let g:syntastic_auto_loc_list = 1
-"let g:syntastic_check_on_open = 1
-"let g:syntastic_check_on_wq = 0
+let g:ale_set_highlights = 1
+let g:ale_set_signs = 0
+let g:ale_lint_on_text_changed = 'never'
+let g:ale_lint_on_enter = 0
+let g:airline#extensions#ale#enabled = 1
 
 " -------- 打开启动 --------
+let g:startify_change_cmd = 'cd'
 let g:startify_lists = [
         \ { 'type': 'sessions',  'header': ['   Sessions']       },
         \ { 'type': 'files',     'header': ['   MRU']            },
         \ { 'type': 'bookmarks', 'header': ['   Bookmarks']      },
         \ ]
-
 let g:startify_custom_header = [
 	\ "              syyysssoooyddmmmmmmmNmNNNNNNNNmNNNNNmmmmmNNNNNNNNNNNNNmNNNNNNNMMMNNNmhssssssssss",
 	\ '              osssssosyhdmmmmmmmmmmmNNNNNNNNNNmmmmmmmmNNNNNNNNNmNNNNNNNNNNNNMMMNNMNmyssssssssy',
@@ -540,6 +499,4 @@ let g:startify_custom_header = [
     \ "|                                      zhangqingyang@corp.netease.com                               |",
     \ "+-------------------------------------------------+-------------------------------------------------+",
 	            \]
-
 let g:startify_custom_footer = [ ]
-
