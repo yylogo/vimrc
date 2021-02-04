@@ -55,6 +55,8 @@ Plug 'mhinz/vim-startify'
 Plug 'vim-scripts/vcscommand.vim'
 " 一个基础库
 Plug 'inkarkat/vim-ingo-library'
+" 括号彩虹
+Plug 'luochen1990/rainbow'
 
 call plug#end()
 
@@ -139,6 +141,10 @@ function! s:check_exit() abort
         if l:buf_idx == -1
             continue
         endif
+        if getbufvar(l:buf_idx, '&filetype') == 'startify'
+            let l:close_mark = 0
+            break
+        endif
         if buflisted(l:buf_idx)
             let l:close_mark = 0
             break
@@ -156,6 +162,7 @@ autocmd BufEnter * call s:check_exit()
 if has('nvim')
 	map <S-Insert> <C-R>+
 	map! <S-Insert> <C-R>+
+	imap <S-Insert> <C-R>+
 	map <Home> ^  
 	imap <Home> <Esc>^i  
 	map <End> $
@@ -380,16 +387,18 @@ let g:Lf_ShowRelativePath = 0
 let g:Lf_DefaultMode = 'NameOnly'
 let g:Lf_StlColorscheme = 'popup'
 let g:Lf_HideHelp = 1
-let g:Lf_UseCache = 1
+let g:Lf_UseCache = 0
 let g:Lf_PreviewResult = {'Function':0, 'Colorscheme':1}
 let g:Lf_IgnoreCurrentBufferName = 1
-let g:Lf_GtagsAutoGenerate = 1
+let g:Lf_GtagsAutoGenerate = 0
 let g:Lf_Gtagslabel = 'native-pygments'
 let g:Lf_UseVersionControlTool = 0
 let g:Lf_WildIgnore = {
-        \ 'dir': ['.svn','.git', '.hg', 'res', ],
-        \ 'file': ['*.vcxproj','*.vcproj','*.lib','*.bak','*.exe','*.o','*.so','*.py[co]', '*.obj', '*.log', '*.md', 'tags', '*.png', '*.html']
+        \ 'dir': ['.svn','.git', '.hg', ],
+        \ 'file': ['*.vcxproj','*.vcproj','*.lib','*.bak','*.exe','*.o','*.so','*.py[co]', '*.obj', '*.log', '*.md', 'tags', '*.png', '*.html', '*.json', '*.dds'],
         \}
+" 客户端用的
+" 'res', 'ui_project', 'stat_tools', 'packer_mtl', 'packer_ad64', 'packer', 'nxdoc', 'bin*', 'data', 'Documents'
 " autocmd BufNewFile,BufRead X:/yourdir* let g:Lf_WildIgnore={'file':['*.pyc',],'dir':['tags']}
 let g:Lf_WindowPosition = 'popup'
 let g:Lf_AutoResize = 1
@@ -399,14 +408,14 @@ let g:Lf_PopupPosition = [7, 35]
 let g:Lf_PreviewInPopup = 1
 let g:Lf_PopupPreviewPosition = 'bottom'
 let g:Lf_PopupColorscheme = 'gruvbox_default'
-" \ "--type-add web:*.{html,css,js}*",
 let g:Lf_RgConfig = [
     \ "--max-columns=150",
     \ "--glob=!tags",
     \ '-g "*.{py,c,h}"',
 \ ]
 let g:Lf_MaxCount = 0
-let g:Lf_RememberLastSearch = 1
+" let g:Lf_RememberLastSearch = 1
+let g:Lf_ShortcutB = 0
 
 " -------- vista 标签浏览器 --------
 " 启用悬浮窗预览
@@ -438,18 +447,23 @@ set statusline+=%{NearestMethodOrFunction()}
 autocmd VimEnter * call vista#RunForNearestMethodOrFunction()
 
 " -------- jedi-vim 自动补全 --------
-let g:jedi#completions_enabled = 0
+" let g:jedi#completions_enabled = 0
 let g:jedi#smart_auto_mappings = 1
 
-" -------- 语法检查 --------
+" -------- ale 语法检查 --------
 let g:ale_set_highlights = 1
 let g:ale_set_signs = 0
 let g:ale_lint_on_text_changed = 'never'
-let g:ale_lint_on_enter = 0
+let g:ale_lint_on_enter = 1
 let g:airline#extensions#ale#enabled = 1
+let g:ale_lint_on_text_changed = 'always'
+let g:ale_warn_about_trailing_blank_lines = 0
+let g:ale_warn_about_trailing_whitespace = 0
 
 " -------- 打开启动 --------
 let g:startify_change_cmd = 'cd'
+let g:startify_change_to_vcs_root = 1
+let g:startify_change_to_dir = 1
 let g:startify_lists = [
         \ { 'type': 'sessions',  'header': ['   Sessions']       },
         \ { 'type': 'files',     'header': ['   MRU']            },
@@ -500,3 +514,29 @@ let g:startify_custom_header = [
     \ "+-------------------------------------------------+-------------------------------------------------+",
 	            \]
 let g:startify_custom_footer = [ ]
+
+" -------- rainbow 括号彩虹 --------
+let g:rainbow_active = 1
+let g:rainbow_conf = {
+    \   'guifgs': ['royalblue3', 'darkorange3', 'seagreen3', 'firebrick'],
+    \   'ctermfgs': ['lightblue', 'lightyellow', 'lightcyan', 'lightmagenta'],
+    \   'operators': '_,_',
+    \   'parentheses': ['start=/(/ end=/)/ fold', 'start=/\[/ end=/\]/ fold', 'start=/{/ end=/}/ fold'],
+    \   'separately': {
+    \       '*': {},
+    \       'tex': {
+    \           'parentheses': ['start=/(/ end=/)/', 'start=/\[/ end=/\]/'],
+    \       },
+    \       'lisp': {
+    \           'guifgs': ['royalblue3', 'darkorange3', 'seagreen3', 'firebrick', 'darkorchid3'],
+    \       },
+    \       'vim': {
+    \           'parentheses': ['start=/(/ end=/)/', 'start=/\[/ end=/\]/', 'start=/{/ end=/}/ fold', 'start=/(/ end=/)/ containedin=vimFuncBody', 'start=/\[/ end=/\]/ containedin=vimFuncBody', 'start=/{/ end=/}/ fold containedin=vimFuncBody'],
+    \       },
+    \       'html': {
+    \           'parentheses': ['start=/\v\<((area|base|br|col|embed|hr|img|input|keygen|link|menuitem|meta|param|source|track|wbr)[ >])@!\z([-_:a-zA-Z0-9]+)(\s+[-_:a-zA-Z0-9]+(\=("[^"]*"|'."'".'[^'."'".']*'."'".'|[^ '."'".'"><=`]*))?)*\>/ end=#</\z1># fold'],
+    \       },
+    \       'css': 0,
+    \   }
+    \}
+
