@@ -16,6 +16,8 @@ endif
 Plug 'kristijanhusak/defx-icons' 
 " 模糊检索
 Plug 'Yggdroot/LeaderF', { 'do': './install.sh' } 
+" 自动生成索引
+Plug 'ludovicchabant/vim-gutentags'
 " 标签浏览
 Plug 'liuchengxu/vista.vim'
 " 全局搜索(IDE的Ctrl + Shift + F)
@@ -29,11 +31,12 @@ Plug 'derekwyatt/vim-fswitch'
 Plug 'mg979/vim-visual-multi', {'branch': 'master'}
 " 语法补全
 Plug 'davidhalter/jedi-vim'
+Plug 'Valloric/YouCompleteMe'
 " 语法检查
-Plug 'dense-analysis/ale'
+" Plug 'dense-analysis/ale'
 " 书签插件，会计按键m, [, ] 为主
-Plug 'kshenoy/vim-signature' 
 Plug 'yylogo/vim-mark'
+Plug 'kshenoy/vim-signature' 
 " 键盘映射,  TODO: 还要看看怎么用
 Plug 'liuchengxu/vim-which-key', { 'on': ['WhichKey', 'WhichKey!'] }
 " Python自动格式化插件
@@ -41,11 +44,11 @@ Plug 'tell-k/vim-autopep8'
 " vim内部集成git
 Plug 'tpope/vim-fugitive'
 " C++显示增强
-Plug 'octol/vim-cpp-enhanced-highlight'
+" Plug 'octol/vim-cpp-enhanced-highlight'
 " tab对齐显示工具
 Plug 'Yggdroot/indentLine'
 " 标签标记工具
-Plug 'yylogo/vim-signify'
+Plug 'mhinz/vim-signify'
 " 自动注释插件
 Plug 'scrooloose/nerdcommenter'
 " 启动管理
@@ -57,6 +60,11 @@ Plug 'vim-scripts/vcscommand.vim'
 Plug 'inkarkat/vim-ingo-library'
 " 括号彩虹
 Plug 'luochen1990/rainbow'
+" yapf
+Plug 'pignacio/vim-yapf-format'
+" 自动格式化
+Plug 'vim-autoformat/vim-autoformat'
+
 
 call plug#end()
 
@@ -121,6 +129,8 @@ set ambiwidth=double
 set t_Co=256
 " 永远显示状态栏
 set laststatus=2
+" 刷新时间设置为500ms，（默认4000ms
+set updatetime=500
 
 
 " 记住上次打开的文件的位置
@@ -235,6 +245,8 @@ nmap <Leader>] g]
 " Leaderf 默认有<Leader>f 全局搜索文件， <Leader>b 搜索一打开的buffer
 " 在命令行输入:e %%就可以代表当前编辑文件的目录
 " cnoremap <expr> %% getcmdtype()==':'?expand('%:h').'/':'%%'
+
+map <Leader>ss :YapfFullFormat<CR>
 
 " ========================== 插件统一配置 ==========================
 " -------- Defx --------
@@ -382,7 +394,46 @@ let g:airline_section_z                        = ''
 " let g:airline_section_warning                  = ''
 " let g:airline_section_error                  = ''
 
+" -------- gutentags --------
+let g:Lf_CacheDirectory = expand('~')
+let g:gutentags_cache_dir = expand(g:Lf_CacheDirectory.'/.LfCache/gtags')
+" gutentags 搜索工程目录的标志，当前文件路径向上递归直到碰到这些文件/目录名
+let g:gutentags_project_root = ['.root', '.svn', '.git', '.hg', '.project']
+
+let g:gutentags_modules = ['gtags_cscope']
+let g:gutentags_define_advanced_commands = 1
+let g:gen_tags#verbose = 1
+
+" 禁用 gutentags 自动加载 gtags 数据库的行为
+let g:gutentags_auto_add_gtags_cscope = 1
+
+let GtagsCscope_Auto_Load = 1
+let CtagsCscope_Auto_Map = 1
+let GtagsCscope_Quiet = 1
+
+set cscopetag                  " 使用 cscope 作为 tags 命令
+set cscopeprg='gtags-cscope'   " 使用 gtags-cscope 代替 cscope
+
+set statusline+=%{gutentags#statusline()}
+augroup MyGutentagsStatusLineRefresher
+    autocmd!
+    autocmd User GutentagsUpdating call airline#update_statusline()
+    autocmd User GutentagsUpdated call airline#update_statusline()
+augroup END
+
+
 " -------- Leaderf --------
+let g:Lf_GtagsAutoGenerate = 0
+let g:Lf_GtagsHigherThan6_6_2 = 0
+" let g:Lf_GtagsSource= 0
+" let g:Lf_GtagsfilesCmd = {
+    "\ '.git': 'git ls-files --recurse-submodules',
+    "\ '.hg': 'hg files',
+    "\ 'default': 'svn list -R | grep "\.py\$"',
+    "\}
+let g:Lf_Gtagslabel = 'native-pygments'
+let g:Lf_Gtagsconf = '~/.globalrc'
+
 let g:Lf_ShowRelativePath = 0
 let g:Lf_DefaultMode = 'NameOnly'
 let g:Lf_StlColorscheme = 'popup'
@@ -390,12 +441,12 @@ let g:Lf_HideHelp = 1
 let g:Lf_UseCache = 0
 let g:Lf_PreviewResult = {'Function':0, 'Colorscheme':1}
 let g:Lf_IgnoreCurrentBufferName = 1
-let g:Lf_GtagsAutoGenerate = 0
-let g:Lf_Gtagslabel = 'native-pygments'
+let g:Lf_RootMarkers = ['.git', '.hg', '.svn']
 let g:Lf_UseVersionControlTool = 0
 let g:Lf_WildIgnore = {
-        \ 'dir': ['.svn','.git', '.hg', ],
-        \ 'file': ['*.vcxproj','*.vcproj','*.lib','*.bak','*.exe','*.o','*.so','*.py[co]', '*.obj', '*.log', '*.md', 'tags', '*.png', '*.html', '*.json', '*.dds'],
+        \ 'dir': ['.svn','.git', '.hg', 'res', 'res_tool', 'packer_mtl', 'packer_ad64', 'packer', 'nxdoc', 'bin*', 'data', 'Documents', 'venv'],
+        \ 'file': ['*.vcxproj','*.vcproj','*.lib','*.bak','*.exe','*.o','*.so','*.pyc', '*.obj', '*.log', '*.md', 'tags', '*.png', '*.html', '*.json', '*.dds', '*.dll', '*.bnk', '*.txt', '*.tcl', '*.bat',
+                    \ '*.zip', '*.doc', '*.nxs', '*.gim', '*.mesh', '*.mtg', '*.xlsx', '*.pyo'],
         \}
 " 客户端用的
 " 'res', 'ui_project', 'stat_tools', 'packer_mtl', 'packer_ad64', 'packer', 'nxdoc', 'bin*', 'data', 'Documents'
@@ -451,67 +502,66 @@ autocmd VimEnter * call vista#RunForNearestMethodOrFunction()
 let g:jedi#smart_auto_mappings = 1
 
 " -------- ale 语法检查 --------
-let g:ale_set_highlights = 1
-let g:ale_set_signs = 0
-let g:ale_lint_on_text_changed = 'never'
-let g:ale_lint_on_enter = 1
-let g:airline#extensions#ale#enabled = 1
-let g:ale_lint_on_text_changed = 'always'
-let g:ale_warn_about_trailing_blank_lines = 0
-let g:ale_warn_about_trailing_whitespace = 0
+"  用YCM的即可
+"let g:ale_set_highlights = 1
+"let g:ale_set_signs = 0
+"let g:ale_lint_on_enter = 1
+"let g:airline#extensions#ale#enabled = 1
+"let g:ale_lint_on_text_changed = 'always'
+"let g:ale_warn_about_trailing_blank_lines = 0
+"let g:ale_warn_about_trailing_whitespace = 0
 
 " -------- 打开启动 --------
 let g:startify_change_cmd = 'cd'
 let g:startify_change_to_vcs_root = 1
 let g:startify_change_to_dir = 1
 let g:startify_lists = [
-        \ { 'type': 'sessions',  'header': ['   Sessions']       },
         \ { 'type': 'files',     'header': ['   MRU']            },
         \ { 'type': 'bookmarks', 'header': ['   Bookmarks']      },
         \ ]
+" 感觉文件就够用了
+" \ { 'type': 'sessions',  'header': ['   Sessions']       },
 let g:startify_custom_header = [
-	\ "              syyysssoooyddmmmmmmmNmNNNNNNNNmNNNNNmmmmmNNNNNNNNNNNNNmNNNNNNNMMMNNNmhssssssssss",
-	\ '              osssssosyhdmmmmmmmmmmmNNNNNNNNNNmmmmmmmmNNNNNNNNNmNNNNNNNNNNNNMMMNNMNmyssssssssy',
-	\ '              ossssssydmmmmmmdhhhhdNNmmNNmmmmddhhdmmmmmmmmmmNNNNNNNNNNNNNNNNMMMNNNNNdsssooosyy',
-	\ '              ossssoohmmmmmdho+ooshddhhhyhhysssossddddmddmmmNNNNmmmmmNNNNNNMMMMNNNNNdysooooosy',
-	\ '              oossoosmNNmmys/::://oooo+++o+//////oyyshdyhdmmmmNNhhhdmNNNNNNNMMMMNNNNmhssoooosy',
-	\ '              +++ooshmNmys+/------:::::::::---::::///+++oyyhhddhsssyhdmmNNNNMMMMMNNNNhsssssyyy',
-	\ '              ///+oshmms:::---.....----------------::///++ooooo++++osyhdmNNNNMMMMMNNNdssyyyhhy',
-	\ '              //++oydmh::----..................-----::::///////////++oyhdmNNNNMMMMNNmdyyyyyyyy',
-	\ '              ++oosydmo:----.......................----::::::///////+osyddmmNNNNNMNNmdhhysssyy',
-	\ '              ooossyhd/:/+++++/:-..............--://++++++//////////++oshddmmNNNNNNmmhhyyyyyyh',
-	\ '              sssssshh/+sssssssys+:-.......--/+osyyyyhhyyssoo+//////+++osyhdmmNNNNmmmhyyyyyyhh',
-	\ '              ssssssyy///::----:///:---.---:///////////+++ooooo///////++oshdmmmmmmmmdyyssyyyyy',
-	\ '              yyssssys-::-......--::--..---:/:---.....--:///+++/////////+oydmmmmmmmdhyyssyyyyy',
-	\ '              ssssyyy+---://-+so+:----....://:-----////::://///////:::///oydmmmmmddhhyyyyyhhyy',
-	\ '              ossyyss/-.-//:./hdh/---..`.-//::-/o/-ymmhosoo++//:::::::::/oydmmddhhysssyyyyyyyy',
-	\ '              ossssoo/.......--:--..-...-://:--::---///://///::-::::::://+ydddhys+/////syyyyyy',
-	\ '              oosooo+:......---.......`.-::::----::::::::---------::::://+shhyo+++/+++//yyyyyy',
-	\ '              ooooo++:..````.........`.-::::::-...--------...----::::////+osooo+o///o+/:yyyyyy',
-	\ "              sooo+++/..````````....``.-:////:-..............---::////////+++oo+++//o+/+yhhyyy",
-	\ '              soooooo/-...``````...``..--::://-...````.....----::///////////+oo+++//+/oyyyyyyy',
-	\ '              ooooooso-.-..```..---..-://:::/+/--.......----::::////++/////++o+++//+/oyyyyyyyy',
-	\ '              oooossss--........-//:/+oooooooo/::-..-------:://////++++////oo+/////-:+osyhhyyy',
-	\ '              osssssss:-......--.-::/++++++++//::--------:::////////+++/////::://::---.--/syyy',
-	\ '              ssssssss/-.....--------::::///////::----:::::://////////++///::::::/::-..````-+s',
-	\ '              sssssssso--....-/++/++///+++++++ooo+/:-:::::/://///////+++/--/:-..-:-.```````  `',
-	\ '              sssssssss/--...-:://////++++oosssso+/--:::::///////+//////-.::.  ``.-------...``',
-	\ '              ssssssssso/--..--..---:///////////:::--:::://////+++++++/:-:/.`  ````-::---.....',
-	\ '              sssssssssso/:--......-----------::---::///////++++++++++//:/-.`````   `..---....',
-	\ '              ssssssssssso+/:-............------::::////+++++++++++++++/+:.``````       ``....',
-	\ '              ssssssssssso/--::---..--.-----::::://++++++ooooooooooo+++o:.```````          `.:',
-	\ '              ssssssssso/-:.`.-.-:::::::::///++++ooooooooooooooooooo++o:.````````             ',
-	\ '              sssssssso-`:o...: ``/ooooosssssssssssooooooooooooo+++oo+-.`````````             ',
-	\ '              ssssoooo- `-/``/- `./h+/++ooooosooooooo+++++++++++++oo/.``````````              ',
-	\ '              ooooooo/  `````/``:/+hh+///////////++++++++++++++++o+-.`````````````            ',
-	\ '              ooooooo-     `.:``:+ohds////:::://////////////+++++-.`````````  ````      ``````',
-	\ '              oo+++++.     `.:-.-oshdd+/////:///////////////+++/.```````````  ``     ````     ',
-	\ '              :::::::      `.:/-./shmm+/://////////////::///++-``````````````  ```````        ',
-	\ '              `.-+sys`    ...-/---symhy/::////////////::::///-`````````````.```--`           `',
-	\ '              -shdddd+    `-./+//+ssdsmo//:/:::::::::::::://.```````.````.:..-//.``     ``.:oy',
-    \ "+---------------------------------------------------------------------------------------------------+",
-    \ "|                                      zhangqingyang@corp.netease.com                               |",
-    \ "+-------------------------------------------------+-------------------------------------------------+",
+	\ "                                                                          syyysssoooyddmmmmmmmNmNNNNNNNNmNNNNNmmmmmNNNNNNNNNNNNNmNNNNNNNMMMNNNmhssssssssss",
+	\ '                                                                          osssssosyhdmmmmmmmmmmmNNNNNNNNNNmmmmmmmmNNNNNNNNNmNNNNNNNNNNNNMMMNNMNmyssssssssy',
+	\ '                                                                          ossssssydmmmmmmdhhhhdNNmmNNmmmmddhhdmmmmmmmmmmNNNNNNNNNNNNNNNNMMMNNNNNdsssooosyy',
+	\ '                                                                          ossssoohmmmmmdho+ooshddhhhyhhysssossddddmddmmmNNNNmmmmmNNNNNNMMMMNNNNNdysooooosy',
+	\ '                                                                          oossoosmNNmmys/::://oooo+++o+//////oyyshdyhdmmmmNNhhhdmNNNNNNNMMMMNNNNmhssoooosy',
+	\ '                                                                          +++ooshmNmys+/------:::::::::---::::///+++oyyhhddhsssyhdmmNNNNMMMMMNNNNhsssssyyy',
+	\ '                                                                          ///+oshmms:::---.....----------------::///++ooooo++++osyhdmNNNNMMMMMNNNdssyyyhhy',
+	\ '                                                                          //++oydmh::----..................-----::::///////////++oyhdmNNNNMMMMNNmdyyyyyyyy',
+	\ '                                                                          ++oosydmo:----.......................----::::::///////+osyddmmNNNNNMNNmdhhysssyy',
+	\ '                                                                          ooossyhd/:/+++++/:-..............--://++++++//////////++oshddmmNNNNNNmmhhyyyyyyh',
+	\ '                                                                          sssssshh/+sssssssys+:-.......--/+osyyyyhhyyssoo+//////+++osyhdmmNNNNmmmhyyyyyyhh',
+	\ '                                                                          ssssssyy///::----:///:---.---:///////////+++ooooo///////++oshdmmmmmmmmdyyssyyyyy',
+	\ '                                                                          yyssssys-::-......--::--..---:/:---.....--:///+++/////////+oydmmmmmmmdhyyssyyyyy',
+	\ '                                                                          ssssyyy+---://-+so+:----....://:-----////::://///////:::///oydmmmmmddhhyyyyyhhyy',
+	\ '                                                                          ossyyss/-.-//:./hdh/---..`.-//::-/o/-ymmhosoo++//:::::::::/oydmmddhhysssyyyyyyyy',
+	\ '                                                                          ossssoo/.......--:--..-...-://:--::---///://///::-::::::://+ydddhys+/////syyyyyy',
+	\ '                                                                          oosooo+:......---.......`.-::::----::::::::---------::::://+shhyo+++/+++//yyyyyy',
+	\ '                                                                          ooooo++:..````.........`.-::::::-...--------...----::::////+osooo+o///o+/:yyyyyy',
+	\ "                                                                          sooo+++/..````````....``.-:////:-..............---::////////+++oo+++//o+/+yhhyyy",
+	\ '                                                                          soooooo/-...``````...``..--::://-...````.....----::///////////+oo+++//+/oyyyyyyy',
+	\ '                                                                          ooooooso-.-..```..---..-://:::/+/--.......----::::////++/////++o+++//+/oyyyyyyyy',
+	\ '                                                                          oooossss--........-//:/+oooooooo/::-..-------:://////++++////oo+/////-:+osyhhyyy',
+	\ '                                                                          osssssss:-......--.-::/++++++++//::--------:::////////+++/////::://::---.--/syyy',
+	\ '                                                                          ssssssss/-.....--------::::///////::----:::::://////////++///::::::/::-..````-+s',
+	\ '                                                                          sssssssso--....-/++/++///+++++++ooo+/:-:::::/://///////+++/--/:-..-:-.```````  `',
+	\ '                                                                          sssssssss/--...-:://////++++oosssso+/--:::::///////+//////-.::.  ``.-------...``',
+	\ '                                                                          ssssssssso/--..--..---:///////////:::--:::://////+++++++/:-:/.`  ````-::---.....',
+	\ '                                                                          sssssssssso/:--......-----------::---::///////++++++++++//:/-.`````   `..---....',
+	\ '                                                                          ssssssssssso+/:-............------::::////+++++++++++++++/+:.``````       ``....',
+	\ '                                                                          ssssssssssso/--::---..--.-----::::://++++++ooooooooooo+++o:.```````          `.:',
+	\ '                                                                          ssssssssso/-:.`.-.-:::::::::///++++ooooooooooooooooooo++o:.````````             ',
+	\ '                                                                          sssssssso-`:o...: ``/ooooosssssssssssooooooooooooo+++oo+-.`````````             ',
+	\ '                                                                          ssssoooo- `-/``/- `./h+/++ooooosooooooo+++++++++++++oo/.``````````              ',
+	\ '                                                                          ooooooo/  `````/``:/+hh+///////////++++++++++++++++o+-.`````````````            ',
+	\ '                                                                          ooooooo-     `.:``:+ohds////:::://////////////+++++-.`````````  ````      ``````',
+	\ '                                                                          oo+++++.     `.:-.-oshdd+/////:///////////////+++/.```````````  ``     ````     ',
+	\ '                                                                          :::::::      `.:/-./shmm+/://////////////::///++-``````````````  ```````        ',
+    \ "                                                               +---------------------------------------------------------------------------------------------------+",
+    \ "                                                               |                                      zhangqingyang@corp.netease.com                               |",
+    \ "                                                               +-------------------------------------------------+-------------------------------------------------+",
 	            \]
 let g:startify_custom_footer = [ ]
 
@@ -539,4 +589,55 @@ let g:rainbow_conf = {
     \       'css': 0,
     \   }
     \}
+
+" -------- vim-signify --------
+" let g:signify_sign_change_delete = 1
+
+" -------- YCM --------
+"let g:ycm_global_ycm_extra_conf=g:Lf_CacheDirectory.'/.ycm_extra_conf.py'
+let g:ycm_confirm_extra_conf = 0
+let g:ycm_collect_identifiers_from_tags_files=1
+let g:ycm_min_num_of_chars_for_completion=1
+let g:ycm_seed_identifiers_with_syntax=1
+let g:ycm_complete_in_comments = 1 "在注释输入中也能补全
+let g:ycm_complete_in_strings = 1 "在字符串输入中也能补全
+let g:ycm_collect_identifiers_from_comments_and_strings = 0 "注释和字符串中的文字也会被收入补全
+let g:ycm_max_num_identifier_candidates = 50
+let g:ycm_auto_trigger = 1
+let g:ycm_error_symbol = '>>'
+let g:ycm_warning_symbol = '>'
+let g:ycm_always_populate_location_list = 0
+
+
+" -------- vim-cpp-enhanced-highlight --------
+let g:cpp_class_scope_highlight = 1
+let g:cpp_member_variable_highlight = 1
+let g:cpp_class_decl_highlight = 1
+let g:cpp_posix_standard = 1
+
+" -------- autoformat --------
+"nnoremap <leader>lf :call FormatCode("", "file")<CR>
+"vnoremap <leader>lf :call FormatCode(visualmode(), "file")<CR>
+nnoremap <leader>gf :call FormatCode("", "Google")<CR>
+vnoremap <leader>gf :call FormatCode(visualmode(), "Google")<CR>
+"nnoremap <leader>cf :call FormatCode("", "Chromium")<CR>
+"vnoremap <leader>cf :call FormatCode(visualmode(), "Chromium")<CR>
+"nnoremap <leader>lf :call FormatCode("", "LLVM")<CR>
+"vnoremap <leader>lf :call FormatCode(visualmode(), "LLVM")<CR>
+
+func! FormatCode(exe_mode, style) range
+  if a:exe_mode == ""
+    let firstline_no = 1
+    let lastline_no = line("$")
+  else
+    let firstline_no = a:firstline
+    let lastline_no = a:lastline
+  endif
+  let l:save_formatdef = g:formatdef_clangformat
+  let l:tmpa = join(["clang-format --lines=", firstline_no, ":", lastline_no], "")
+  let g:formatdef_clangformat = "'" . l:tmpa . " --assume-filename=' . bufname('%') . ' -style=" . a:style . "'"
+  let formatcommand = ":Autoformat"
+  exec formatcommand
+  let g:formatdef_clangformat = l:save_formatdef
+endfunc
 
